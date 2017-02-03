@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TITLE</title>
+    <style type="text/css">
+      body { font-family: sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <textarea id="msgs" rows="24" cols="80"></textarea>
+    </div>
+    <div>
+      <input id="msg" type="text" placeholder="Type your message here. Press ENTER to send!!" size="80">
+    </div>
+    <div style="margin-top: 10px;">
+      Connection status: <span id="status">Connecting...</span>
+    </div>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      $(function () {
+        window.WebSocket = window.WebSocket || window.MozWebSocket;
+
+        //var connection = new WebSocket('ws://127.0.0.1:8080/sys');
+        setupConnection();
+        var send_msg = false;
+        var s = document.getElementById("status");
+        var m = document.getElementById("msg");
+        var ms = document.getElementById("msgs");
+
+        sendMessage = function(conn) {
+          if (send_msg == true && m.value.trim().length > 0) {
+            console.log("SEND_MSG - " + m.value);
+            connection.send(m.value);
+            ms.value += "ME: " + m.value + "\n";
+            m.value = "";
+            m.focus();
+          } else if (send_msg == false) {
+            setupConnection();
+          }
+        }
+
+        function setupConnection() {
+          connection = new WebSocket('ws://127.0.0.1:8080/sys');
+
+          connection.onopen = function () {
+            s.innerText = "Open!";
+            console.log("ON_OPEN");
+            send_msg = true;
+            error = false;
+          };
+
+          connection.onclose = function () {
+            s.innerText = "Disconnected!";
+            console.log("ON_CLOSE");
+            send_msg = false;
+          };
+
+          connection.onerror = function (error) {
+            alert('Error connecting to server!');
+            s.innerText = "Error!";
+            console.log("ON_ERROR");
+            send_msg = false;
+          };
+
+          connection.onmessage = function (message) {
+            try {
+              //var json = JSON.parse(message.data);
+              ms.value += "ANON: " + message.data + "\n";
+            } catch (e) {
+              console.log(e);
+            }
+          };
+        }
+
+        m.focus();
+        m.addEventListener('keyup', function (e) {
+          if (e.keyCode === 13) {
+            sendMessage();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+<!--
+vim: ts=2 sts=2 sw=2 et ai si
+-->
